@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>UMTP単語帳</title>
+
+<style>
+body {
+  font-family: "Yu Gothic", sans-serif;
+  text-align: center;
+  margin: 40px;
+  background: #f0f4f8;
+}
+
+h1 { color: #1e293b; }
+
+select {
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+button {
+  margin: 6px;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 10px;
+  background:#3b82f6;
+  color:white;
+  cursor:pointer;
+}
+
+/* 一覧 */
+#wordList {
+  margin: 30px auto;
+  width: 600px;
+  text-align: left;
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.wordItem {
+  padding: 8px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+.wordItem:hover {
+  background: #e0f2fe;
+}
+
+/* 詳細 */
+#detailPage, #studyPage {
+  display: none;
+  width: 600px;
+  margin: 30px auto;
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  text-align: left;
+}
+
+.category {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.wordTitle {
+  font-size: 26px;
+  color: #1e3a8a;
+}
+
+.meaning {
+  font-size: 18px;
+  margin: 10px 0;
+}
+
+.explanation {
+  margin-top: 15px;
+  line-height: 1.7;
+  background: #f8fafc;
+  padding: 15px;
+  border-left: 5px solid #3b82f6;
+  border-radius: 8px;
+}
+</style>
+</head>
+<body>
+
+<h1>UMTP単語帳</h1>
+
+<div>
+  <label>カテゴリ：</label>
+  <select id="categorySelect">
+    <option value="all">すべて</option>
+  </select>
+  <button onclick="startStudy()">学習モード</button>
+</div>
+
+<!-- 一覧 -->
+<div id="wordList"></div>
+
+<!-- 詳細 -->
+<div id="detailPage">
+  <div class="category" id="detailCategory"></div>
+  <div class="wordTitle" id="detailWord"></div>
+  <div class="meaning" id="detailMeaning"></div>
+  <div class="explanation" id="detailExplanation"></div>
+  <button onclick="backToList()">一覧へ戻る</button>
+</div>
+
+<!-- 学習モード -->
+<div id="studyPage">
+  <div class="category" id="studyCategory"></div>
+  <div class="wordTitle" id="studyWord"></div>
+  <div class="meaning" id="studyMeaning"></div>
+  <div class="explanation" id="studyExplanation"></div>
+  <div style="text-align:center;margin-top:20px;">
+    <button onclick="prevStudy()">← 前へ</button>
+    <button onclick="nextStudy()">次へ →</button>
+    <button onclick="exitStudy()">終了</button>
+  </div>
+</div>
+
+<script>
+const SHEET_ID = "1SYfpxMPoxWuc7R_HeDVzv9ioGqpzR6jhemPwxDXncwI";
+const SHEET_NAME = "words";
+const URL = `https://opensheet.elk.sh/${SHEET_ID}/${SHEET_NAME}`;
+
+let allWords = [];
+let currentList = [];
+let studyIndex = 0;
+
+fetch(URL)
+  .then(res => res.json())
+  .then(data => {
+    allWords = data;
+    setupCategoryMenu();
+    renderList();
+  });
+
+function setupCategoryMenu(){
+  const categories = [...new Set(allWords.map(w => w.category))].filter(Boolean).sort();
+  const select = document.getElementById("categorySelect");
+
+  categories.forEach(cat=>{
+    const option = document.createElement("option");
+    option.value = cat;
+    option.textContent = cat;
+    select.appendChild(option);
+  });
+
+  select.onchange = renderList;
+}
+
+function getFilteredList(){
+  const selected = document.getElementById("categorySelect").value;
+  return selected === "all"
+    ? allWords
+    : allWords.filter(w => w.category === selected);
+}
+
+function renderList(){
+  const list = getFilteredList();
+  const container = document.getElementById("wordList");
+  container.innerHTML = "";
+
+  list.forEach(w=>{
+    const div = document.createElement("div");
+    div.className = "wordItem";
+    div.textContent = `【${w.category}】 ${w.word}`;
+    div.onclick = () => showDetail(w);
+    container.appendChild(div);
+  });
+
+  showOnly("wordList");
+}
+
+function showDetail(w){
+  document.getElementById("detailCategory").textContent = "カテゴリ： " + w.category;
+  document.getElementById("detailWord").textContent = w.word;
+  document.getElementById("detailMeaning").textContent = w.meaning;
+  document.getElementById("detailExplanation").textContent = w.Explanation;
+  showOnly("detailPage");
+}
+
+function startStudy(){
+  currentList = getFilteredList();
+  studyIndex = 0;
+  showStudy();
+  showOnly("studyPage");
+}
+
+function showStudy(){
+  const w = currentList[studyIndex];
+  document.getElementById("studyCategory").textContent = "カテゴリ： " + w.category;
+  document.getElementById("studyWord").textContent = w.word;
+  document.getElementById("studyMeaning").textContent = w.meaning;
+  document.getElementById("studyExplanation").textContent = w.Explanation;
+}
+
+function nextStudy(){
+  studyIndex = (studyIndex + 1) % currentList.length;
+  showStudy();
+}
+
+function prevStudy(){
+  studyIndex = (studyIndex - 1 + currentList.length) % currentList.length;
+  showStudy();
+}
+
+function exitStudy(){
+  showOnly("wordList");
+}
+
+function backToList(){
+  showOnly("wordList");
+}
+
+function showOnly(id){
+  document.getElementById("wordList").style.display = "none";
+  document.getElementById("detailPage").style.display = "none";
+  document.getElementById("studyPage").style.display = "none";
+  document.getElementById(id).style.display = "block";
+}
+</script>
+
+</body>
+</html>
