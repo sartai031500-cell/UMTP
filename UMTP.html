@@ -2,13 +2,14 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>UMTP単語帳</title>
 
 <style>
 body {
   font-family: "Yu Gothic", sans-serif;
   text-align: center;
-  margin: 40px;
+  margin: 20px;
   background: #f0f4f8;
 }
 
@@ -29,10 +30,14 @@ button {
   cursor:pointer;
 }
 
+button:hover {
+  background:#2563eb;
+}
+
 /* 一覧 */
 #wordList {
   margin: 30px auto;
-  width: 600px;
+  max-width: 700px;
   text-align: left;
   background: white;
   padding: 20px;
@@ -41,7 +46,7 @@ button {
 }
 
 .wordItem {
-  padding: 8px;
+  padding: 10px;
   cursor: pointer;
   border-bottom: 1px solid #eee;
 }
@@ -50,10 +55,10 @@ button {
   background: #e0f2fe;
 }
 
-/* 詳細 */
+/* 詳細・学習共通 */
 #detailPage, #studyPage {
   display: none;
-  width: 600px;
+  max-width: 700px;
   margin: 30px auto;
   background: white;
   padding: 30px;
@@ -70,6 +75,7 @@ button {
 .wordTitle {
   font-size: 26px;
   color: #1e3a8a;
+  margin-top: 5px;
 }
 
 .meaning {
@@ -85,8 +91,23 @@ button {
   border-left: 5px solid #3b82f6;
   border-radius: 8px;
 }
+
+/* 画像 */
+.wordImage {
+  width: 100%;
+  margin-top: 20px;
+  border-radius: 15px;
+  display: none;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.wordImage:hover {
+  transform: scale(1.02);
+}
 </style>
 </head>
+
 <body>
 
 <h1>UMTP単語帳</h1>
@@ -108,7 +129,10 @@ button {
   <div class="wordTitle" id="detailWord"></div>
   <div class="meaning" id="detailMeaning"></div>
   <div class="explanation" id="detailExplanation"></div>
-  <button onclick="backToList()">一覧へ戻る</button>
+  <img id="detailImage" class="wordImage">
+  <div style="margin-top:20px;">
+    <button onclick="backToList()">一覧へ戻る</button>
+  </div>
 </div>
 
 <!-- 学習モード -->
@@ -117,6 +141,7 @@ button {
   <div class="wordTitle" id="studyWord"></div>
   <div class="meaning" id="studyMeaning"></div>
   <div class="explanation" id="studyExplanation"></div>
+  <img id="studyImage" class="wordImage">
   <div style="text-align:center;margin-top:20px;">
     <button onclick="prevStudy()">← 前へ</button>
     <button onclick="nextStudy()">次へ →</button>
@@ -183,6 +208,15 @@ function showDetail(w){
   document.getElementById("detailWord").textContent = w.word;
   document.getElementById("detailMeaning").textContent = w.meaning;
   document.getElementById("detailExplanation").textContent = w.Explanation;
+
+  const img = document.getElementById("detailImage");
+  if(w.image){
+    img.src = w.image;
+    img.style.display = "block";
+  } else {
+    img.style.display = "none";
+  }
+
   showOnly("detailPage");
 }
 
@@ -195,10 +229,19 @@ function startStudy(){
 
 function showStudy(){
   const w = currentList[studyIndex];
+
   document.getElementById("studyCategory").textContent = "カテゴリ： " + w.category;
   document.getElementById("studyWord").textContent = w.word;
   document.getElementById("studyMeaning").textContent = w.meaning;
   document.getElementById("studyExplanation").textContent = w.Explanation;
+
+  const img = document.getElementById("studyImage");
+  if(w.image){
+    img.src = w.image;
+    img.style.display = "block";
+  } else {
+    img.style.display = "none";
+  }
 }
 
 function nextStudy(){
